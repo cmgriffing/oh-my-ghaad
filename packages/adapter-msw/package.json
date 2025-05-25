@@ -1,5 +1,5 @@
 {
-  "name": "@oh-my-ghaad/github",
+  "name": "@oh-my-ghaad/msw",
   "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
@@ -12,9 +12,11 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "@oh-my-ghaad/core": "workspace:*"
+    "@octokit/endpoint": "^11.0.0",
+    "@oh-my-ghaad/core": "workspace:*",
+    "msw": "^2.8.4"
   },
   "devDependencies": {
     "@octokit/types": "^14.0.0",

@@ -6,9 +6,13 @@ import { GithubAdapter } from "@oh-my-ghaad/github";
 
 export const GAAD = new Engine({
   adapters: [
-    new GithubAdapter({
-      clientId: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID!,
-      redirectUri: process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI!,
+    // new GithubAdapter({
+    //   clientId: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID!,
+    //   redirectUri: process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI!,
+    // }),
+    new MSWAdapter({
+      clientId: process.env.NEXT_PUBLIC_MSW_CLIENT_ID!,
+      redirectUri: process.env.NEXT_PUBLIC_MSW_REDIRECT_URI!,
     }),
   ],
   collections: [

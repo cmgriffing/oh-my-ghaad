@@ -1,31 +1,66 @@
 import { z } from "zod";
 
 import { Collection } from "./collection";
-import type { Adapter, AppConfig, RepoConfig } from "./types";
+import type { IAdapter } from "./types";
+import { Adapter } from "./adapter";
+import type { AppConfig, RepoConfig } from "./validators";
+import { repoConfigSchema } from "./validators";
+
+// type Subscriber = (collections: Collection[]) => void;
 
 export class Engine {
-  private adapters: Adapter[] = [];
-  private currentAdapter: Adapter | null = null;
+  private adapters: (Adapter & IAdapter)[] = [];
+  private currentAdapter: (Adapter & IAdapter) | null = null;
   private collections: Collection[] = [];
 
-  private repository: string;
   private token: string;
 
   private appConfig: AppConfig;
   private repoConfig: RepoConfig;
+
+  private collectionItems: Record<string, z.infer<Collection["validator"]>[]> =
+    {};
 
   constructor({
     appConfig,
     adapters,
     collections,
   }: {
-    adapters: Adapter[];
+    adapters: (Adapter & IAdapter)[];
     collections: Collection[];
     appConfig: AppConfig;
   }) {
     this.appConfig = appConfig;
     this.adapters = adapters;
     this.collections = collections;
+  }
+
+  // TODO: Add subscription functionality
+
+  // private subscribers: Set<Subscriber> = new Set();
+
+  // subscribe(subscriber: Subscriber) {
+  //   this.subscribers.add(subscriber);
+  // }
+
+  // unsubscribe(subscriber: Subscriber) {
+  //   this.subscribers.delete(subscriber);
+  // }
+
+  // private notifySubscribers() {
+  //   this.subscribers.forEach((subscriber) => subscriber(this.collections));
+  // }
+
+  setRepoOwner(owner: string) {
+    this.adapters.forEach((adapter) => {
+      adapter.setOwner(owner);
+    });
+  }
+
+  setRepoName(name: string) {
+    this.adapters.forEach((adapter) => {
+      adapter.setRepo(name);
+    });
   }
 
   getAppConfig() {
@@ -40,8 +75,19 @@ export class Engine {
     this.repoConfig = repoConfig;
   }
 
-  fetchRepoConfig() {
-    // TODO: Fetch repo config
+  async fetchRepoConfig(): Promise<RepoConfig> {
+    const rawConfigString = await this.currentAdapter?.getFile("config.json");
+
+    if (!rawConfigString) {
+      throw new Error("Failed to fetch repo config");
+    }
+
+    const rawConfig = JSON.parse(rawConfigString);
+    const parsedConfig = repoConfigSchema.parse(rawConfig);
+
+    this.setRepoConfig(parsedConfig);
+
+    return parsedConfig;
   }
 
   getToken() {
@@ -52,19 +98,11 @@ export class Engine {
     this.token = token;
   }
 
-  getRepository() {
-    return this.repository;
-  }
-
-  setRepository(repository: string) {
-    this.repository = repository;
-  }
-
   getAdapters() {
     return this.adapters;
   }
 
-  setAdapter(adapter: Adapter | null) {
+  setAdapter(adapter: (Adapter & IAdapter) | null) {
     this.currentAdapter = adapter;
   }
 
@@ -72,117 +110,202 @@ export class Engine {
     return this.currentAdapter;
   }
 
-  // TODO: Should this be getCollectionItems
   async getCollections(): Promise<Collection[]> {
-    if (!this.currentAdapter) {
-      throw new Error("No adapter selected");
-    }
-    throw new Error("Not implemented");
+    return this.collections;
   }
 
-  async fetchCollections() {
-    // TODO: Fetch collections
-  }
-
-  async getCollection<T extends Collection>(
-    collection: T
-  ): Promise<z.infer<T["validator"]>> {
-    if (!this.currentAdapter) {
-      throw new Error("No adapter selected");
-    }
-
-    if (!this.collections.find((c) => c.id === collection.id)) {
-      throw new Error("Collection not found");
-    }
-
-    // TODO: Get collection
-
-    throw new Error("Not implemented");
+  getCollection<T extends Collection>(
+    collectionLookupValue:
+      | T["id"]
+      | T["names"]["singular"]
+      | T["names"]["plural"]
+  ): Collection | undefined {
+    return this.collections.find(
+      (c) =>
+        c.id === collectionLookupValue ||
+        Object.values(c.names).includes(collectionLookupValue)
+    );
   }
 
   async getCollectionItems<T extends Collection>(
-    collection: T
+    collectionLookupValue:
+      | T["id"]
+      | T["names"]["singular"]
+      | T["names"]["plural"]
   ): Promise<z.infer<T["validator"]>[]> {
-    if (!this.currentAdapter) {
-      throw new Error("No adapter selected");
-    }
+    const collection = this.getCollection(collectionLookupValue);
 
-    if (!this.collections.find((c) => c.id === collection.id)) {
+    if (!collection) {
       throw new Error("Collection not found");
     }
 
-    // TODO: Get collection items
+    if (!this.collectionItems[collection.id]) {
+      return [];
+    }
 
-    throw new Error("Not implemented");
+    return this.collectionItems[collection.id];
   }
 
   async fetchCollectionItems<T extends Collection>(
-    collection: T
+    collectionLookupValue:
+      | T["id"]
+      | T["names"]["singular"]
+      | T["names"]["plural"]
   ): Promise<z.infer<T["validator"]>[]> {
     if (!this.currentAdapter) {
       throw new Error("No adapter selected");
     }
 
-    if (!this.collections.find((c) => c.id === collection.id)) {
+    const collection = this.getCollection(collectionLookupValue);
+
+    if (!collection) {
       throw new Error("Collection not found");
     }
 
-    // TODO: Fetch collection items
+    const rawCollectionItems = await this.currentAdapter.getDirectory(
+      `collections/${collection.names.plural}`
+    );
 
-    throw new Error("Not implemented");
+    const collectionItems =
+      rawCollectionItems?.map((item) => {
+        return collection.validator.parse(JSON.parse(item)) as z.infer<
+          T["validator"]
+        >;
+      }) || [];
+
+    this.collectionItems[collection.id] = collectionItems;
+
+    return collectionItems;
   }
 
   async addToCollection<T extends Collection>(
-    collection: T,
+    collectionLookupValue:
+      | T["id"]
+      | T["names"]["singular"]
+      | T["names"]["plural"],
     data: z.infer<T["validator"]>
-  ): Promise<T> {
+  ): Promise<T[]> {
     if (!this.currentAdapter) {
       throw new Error("No adapter selected");
     }
 
-    if (!this.collections.find((c) => c.id === collection.id)) {
+    const collection = this.getCollection(collectionLookupValue);
+
+    if (!collection) {
       throw new Error("Collection not found");
     }
 
     const item = collection.validator.parse(data);
 
-    // TODO: Add item
+    if (this.collectionItems[collection.id]) {
+      this.collectionItems[collection.id].push(item);
+    } else {
+      this.collectionItems[collection.id] = [item];
+    }
 
-    throw new Error("Not implemented");
+    let request: ReturnType<
+      IAdapter["createCommit"] | IAdapter["createPullRequest"]
+    >;
+
+    if (this.repoConfig.prBasedMutations) {
+      request = this.currentAdapter.createPullRequest({
+        title: `Add ${collection.names.singular} ${item.id}`,
+        description: `Add ${collection.names.singular} ${item.id}`,
+      });
+    } else {
+      request = this.currentAdapter.createCommit({
+        message: `Add ${collection.names.singular} ${item.id}`,
+      });
+    }
+
+    return request.then(() => {
+      this.collectionItems[collection.id] = [
+        ...(this.collectionItems[collection.id] || []),
+        item,
+      ];
+
+      return this.collectionItems[collection.id];
+    });
   }
+
   async removeFromCollection<T extends Collection>(
-    collection: T,
+    collectionLookupValue:
+      | T["id"]
+      | T["names"]["singular"]
+      | T["names"]["plural"],
     itemId: z.infer<T["validator"]>["id"]
-  ): Promise<T> {
+  ): Promise<T[]> {
     if (!this.currentAdapter) {
       throw new Error("No adapter selected");
     }
 
-    if (!this.collections.find((c) => c.id === collection.id)) {
+    const collection = this.getCollection(collectionLookupValue);
+
+    if (!collection) {
       throw new Error("Collection not found");
     }
 
-    // TODO: Remove item
+    let request: ReturnType<
+      IAdapter["createCommit"] | IAdapter["createPullRequest"]
+    >;
 
-    throw new Error("Not implemented");
-  }
-
-  async updateInCollection<T extends Collection>(
-    collection: T,
-    data: z.infer<T["validator"]>
-  ): Promise<T> {
-    if (!this.currentAdapter) {
-      throw new Error("No adapter selected");
+    if (this.repoConfig.prBasedMutations) {
+      request = this.currentAdapter.createPullRequest({
+        title: `Remove ${collection.names.singular} ${itemId}`,
+        description: `Remove ${collection.names.singular} ${itemId}`,
+      });
+    } else {
+      request = this.currentAdapter.createCommit({
+        message: `Remove ${collection.names.singular} ${itemId}`,
+      });
     }
 
-    if (!this.collections.find((c) => c.id === collection.id)) {
-      throw new Error("Collection not found");
-    }
-
-    const item = collection.validator.parse(data);
-
-    // TODO: Update item
-
-    throw new Error("Not implemented");
+    return request.then(() => {
+      this.collectionItems[collection.id] =
+        this.collectionItems[collection.id]?.filter(
+          (item) => item.id !== itemId
+        ) || [];
+      return this.collectionItems[collection.id];
+    });
   }
+
+  // async updateInCollection<T extends Collection>(
+  //   collectionLookupValue:
+  //     | T["id"]
+  //     | T["names"]["singular"]
+  //     | T["names"]["plural"],
+  //   itemId: string,
+  //   data: z.infer<T["validator"]>
+  // ): Promise<T> {
+  //   if (!this.currentAdapter) {
+  //     throw new Error("No adapter selected");
+  //   }
+
+  //   const collection = this.getCollection(collectionLookupValue);
+
+  //   if (!collection) {
+  //     throw new Error("Collection not found");
+  //   }
+
+  //   const existingItem = this.collectionItems[collection.id].find(
+  //     (item) => item.id === itemId
+  //   );
+
+  //   if (!existingItem) {
+  //     throw new Error("Item not found");
+  //   }
+
+  //   const item = collection.validator.parse(data);
+
+  //   this.collectionItems[collection.id] = this.collectionItems[
+  //     collection.id
+  //   ].map((item) => {
+  //     if (item.id === itemId) {
+  //       return item;
+  //     }
+  //     return item;
+  //   });
+
+  //   throw new Error("Not implemented");
+  // }
 }
