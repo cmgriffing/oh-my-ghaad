@@ -80,7 +80,7 @@ To see a full React/GitHub example, see the [demo-app](./apps/demo-app/README.md
 
 ```typescript
 import { Engine } from "@oh-my-ghaad/core";
-import { GitHubAdapter } from "@oh-my-ghaad/github";
+import { GithubAdapter } from "@oh-my-ghaad/github";
 import { z } from "zod";
 
 // Define your collection schema
@@ -108,7 +108,7 @@ const widgetsCollection = {
 };
 
 // Create a GitHub adapter
-const githubAdapter = new GitHubAdapter();
+const githubAdapter = new GithubAdapter();
 
 // Create the engine instance
 const engine = new Engine({

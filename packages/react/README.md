@@ -23,7 +23,7 @@ pnpm add @oh-my-ghaad/react @oh-my-ghaad/core
 
 ```typescript
 import { Engine } from '@oh-my-ghaad/core';
-import { GitHubAdapter } from '@oh-my-ghaad/adapter-github';
+import { GithubAdapter } from '@oh-my-ghaad/adapter-github';
 import { useGHaaD } from '@oh-my-ghaad/react';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
@@ -54,7 +54,7 @@ const widgetsCollection = {
 
 // Create the engine instance
 const engine = new Engine({
-  adapters: [new GitHubAdapter()],
+  adapters: [new GithubAdapter()],
   collections: [widgetsCollection],
   appConfig: {
     persisted: true
