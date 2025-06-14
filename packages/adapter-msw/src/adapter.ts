@@ -9,7 +9,7 @@ import "./msw-setup";
 
 type EndpointPath = keyof Endpoints;
 
-export class GithubAdapter extends Adapter implements IAdapter {
+export class MSWAdapter extends Adapter implements IAdapter {
   readonly name = "MSW";
   readonly icon = "https://mswjs.com/icon.svg";
   readonly primaryColor = "#FF6A33";

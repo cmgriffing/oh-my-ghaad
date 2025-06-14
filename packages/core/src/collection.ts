@@ -8,7 +8,7 @@ interface CollectionNames {
 
 export class Collection {
   id: string;
-  idFunction: (prefix: string) => string;
+  idFunction: () => string;
   names: CollectionNames;
   validator: ZodType;
 
@@ -19,7 +19,7 @@ export class Collection {
     validator,
   }: {
     id: string;
-    idFunction: (prefix: string) => string;
+    idFunction: () => string;
     names: CollectionNames;
     validator: ZodType;
   }) {

@@ -1,19 +1,21 @@
 import { z } from "zod";
 
 import { Collection } from "./collection";
-import type { IAdapter } from "./types";
+import type { IAdapter, PrResponse, RepoStatus, Subscription } from "./types";
 import { Adapter } from "./adapter";
 import type { AppConfig, RepoConfig } from "./validators";
 import { repoConfigSchema } from "./validators";
 
-// type Subscriber = (collections: Collection[]) => void;
+const storage = typeof window !== "undefined" ? window.localStorage : null;
 
 export class Engine {
+  private status: RepoStatus = "unknown";
+
+  private subscriptions: Set<Subscription> = new Set();
+
   private adapters: (Adapter & IAdapter)[] = [];
   private currentAdapter: (Adapter & IAdapter) | null = null;
   private collections: Collection[] = [];
-
-  private token: string;
 
   private appConfig: AppConfig;
   private repoConfig: RepoConfig;
@@ -33,34 +35,94 @@ export class Engine {
     this.appConfig = appConfig;
     this.adapters = adapters;
     this.collections = collections;
+
+    if (this.adapters.length === 1) {
+      this.setAdapter(this.adapters[0]);
+    }
+
+    if (this.appConfig.persisted) {
+      const persistedAdapter = storage?.getItem(
+        this.appConfig.persistedAdapterKey || "adapter"
+      );
+      if (persistedAdapter) {
+        const adapter = this.adapters.find(
+          (adapter) => adapter.name === persistedAdapter
+        );
+        if (adapter) {
+          this.setAdapter(adapter);
+        }
+      }
+
+      const persistedToken = storage?.getItem(
+        this.appConfig.persistedTokenKey || "token"
+      );
+      if (persistedToken) {
+        this.setToken(persistedToken);
+      }
+
+      const persistedRepo = storage?.getItem(
+        this.appConfig.persistedRepoKey || "repo"
+      );
+      if (persistedRepo) {
+        this.getAdapter()?.setRepo(persistedRepo);
+      }
+
+      const persistedOwner = storage?.getItem(
+        this.appConfig.persistedOwnerKey || "owner"
+      );
+      if (persistedOwner) {
+        this.getAdapter()?.setOwner(persistedOwner);
+      }
+    }
   }
 
-  // TODO: Add subscription functionality
+  setUnauthorizedHandler(handler: () => void | Promise<void>) {
+    this.adapters.forEach((adapter) => {
+      adapter.setUnauthorizedHandler(handler);
+    });
+  }
 
-  // private subscribers: Set<Subscriber> = new Set();
+  subscribe(subscription: Subscription) {
+    this.subscriptions.add(subscription);
+  }
 
-  // subscribe(subscriber: Subscriber) {
-  //   this.subscribers.add(subscriber);
-  // }
+  unsubscribe(subscription: Subscription) {
+    this.subscriptions.delete(subscription);
+  }
 
-  // unsubscribe(subscriber: Subscriber) {
-  //   this.subscribers.delete(subscriber);
-  // }
+  private notifySubscribers() {
+    this.subscriptions.forEach((subscription) =>
+      subscription(this.collections)
+    );
+  }
 
-  // private notifySubscribers() {
-  //   this.subscribers.forEach((subscriber) => subscriber(this.collections));
-  // }
+  setRepoOwner(owner: string | null) {
+    if (this.appConfig.persisted) {
+      storage?.setItem(
+        this.appConfig.persistedOwnerKey || "owner",
+        owner || ""
+      );
+    }
 
-  setRepoOwner(owner: string) {
     this.adapters.forEach((adapter) => {
       adapter.setOwner(owner);
     });
+    this.notifySubscribers();
   }
 
-  setRepoName(name: string) {
+  setRepoName(name: string | null) {
+    if (this.appConfig.persisted) {
+      storage?.setItem(this.appConfig.persistedRepoKey || "repo", name || "");
+    }
+
     this.adapters.forEach((adapter) => {
       adapter.setRepo(name);
     });
+    this.notifySubscribers();
+  }
+
+  getRepoStatus() {
+    return this.status;
   }
 
   getAppConfig() {
@@ -71,31 +133,79 @@ export class Engine {
     return this.repoConfig;
   }
 
-  setRepoConfig(repoConfig: RepoConfig) {
-    this.repoConfig = repoConfig;
-  }
-
   async fetchRepoConfig(): Promise<RepoConfig> {
-    const rawConfigString = await this.currentAdapter?.getFile("config.json");
+    const rawConfigString = await this.currentAdapter
+      ?.fetchFile("config.json")
+      .catch(() => {
+        console.log("Could not fetch the config file");
+      });
 
     if (!rawConfigString) {
-      throw new Error("Failed to fetch repo config");
+      console.log("Setting status to empty");
+      this.status = "empty";
+      throw new Error("No config file found");
     }
 
     const rawConfig = JSON.parse(rawConfigString);
-    const parsedConfig = repoConfigSchema.parse(rawConfig);
+    const parsedConfig = repoConfigSchema.safeParse(rawConfig);
 
-    this.setRepoConfig(parsedConfig);
+    let partialConfig = parsedConfig.data as unknown as RepoConfig;
+    if (parsedConfig.success) {
+      this.status = "valid";
+    } else {
+      this.status = "invalid";
+    }
 
-    return parsedConfig;
+    this.repoConfig = partialConfig;
+
+    return partialConfig;
+  }
+
+  async sync() {
+    const [repoConfig, ...fetchedCollectionItems] = await Promise.all([
+      this.fetchRepoConfig().catch((error) => {
+        return {
+          prBasedMutations: false,
+        };
+      }),
+      ...this.collections.map(async (collection) => ({
+        collectionId: collection.id,
+        items: await this.fetchCollectionItems(collection.id).catch((error) => {
+          return [];
+        }),
+      })),
+    ]);
+
+    console.log("Made it past the fetch in sync");
+
+    // TODO: fetch PRs if configured
+    // if (repoConfig.prBasedMutations) {
+    // }
+
+    this.notifySubscribers();
   }
 
   getToken() {
-    return this.token;
+    const currentAdapter = this.getAdapter();
+    if (currentAdapter) {
+      return currentAdapter.token;
+    }
   }
 
-  setToken(token: string) {
-    this.token = token;
+  setToken(token: string | null) {
+    if (this.appConfig.persisted) {
+      storage?.setItem(
+        this.appConfig.persistedTokenKey || "token",
+        token || ""
+      );
+    }
+
+    this.adapters.forEach((adapter) => {
+      console.log("Setting token on adapter", adapter?.name, token?.slice(-5));
+      adapter.setToken(token);
+    });
+
+    this.notifySubscribers();
   }
 
   getAdapters() {
@@ -103,14 +213,23 @@ export class Engine {
   }
 
   setAdapter(adapter: (Adapter & IAdapter) | null) {
+    if (this.appConfig.persisted) {
+      storage?.setItem(
+        this.appConfig.persistedAdapterKey || "adapter",
+        adapter?.name || ""
+      );
+    }
+
     this.currentAdapter = adapter;
+    this.notifySubscribers();
+    return this;
   }
 
   getAdapter() {
     return this.currentAdapter;
   }
 
-  async getCollections(): Promise<Collection[]> {
+  getCollections(): Collection[] {
     return this.collections;
   }
 
@@ -127,12 +246,12 @@ export class Engine {
     );
   }
 
-  async getCollectionItems<T extends Collection>(
+  getCollectionItems<T extends Collection>(
     collectionLookupValue:
       | T["id"]
       | T["names"]["singular"]
       | T["names"]["plural"]
-  ): Promise<z.infer<T["validator"]>[]> {
+  ): z.infer<T["validator"]>[] {
     const collection = this.getCollection(collectionLookupValue);
 
     if (!collection) {
@@ -150,7 +269,8 @@ export class Engine {
     collectionLookupValue:
       | T["id"]
       | T["names"]["singular"]
-      | T["names"]["plural"]
+      | T["names"]["plural"],
+    force = false
   ): Promise<z.infer<T["validator"]>[]> {
     if (!this.currentAdapter) {
       throw new Error("No adapter selected");
@@ -162,8 +282,8 @@ export class Engine {
       throw new Error("Collection not found");
     }
 
-    const rawCollectionItems = await this.currentAdapter.getDirectory(
-      `collections/${collection.names.plural}`
+    const rawCollectionItems = await this.currentAdapter.fetchDirectory(
+      `collections/${collection.names.path}`
     );
 
     const collectionItems =
@@ -173,9 +293,47 @@ export class Engine {
         >;
       }) || [];
 
+    // if (this.repoConfig.prBasedMutations) {
+    //   const pullRequests = await this.fetchPullRequests(force);
+    //   pullRequests.forEach((pr) => {
+    //     // TODO: filter PRs for items in this collection and add them to collection with proper state
+    //     pr.
+    //   });
+    // }
+
     this.collectionItems[collection.id] = collectionItems;
 
+    this.notifySubscribers();
+
     return collectionItems;
+  }
+
+  async fetchCollectionItem<T extends Collection>(
+    collectionLookupValue:
+      | T["id"]
+      | T["names"]["singular"]
+      | T["names"]["plural"],
+    itemId: z.infer<T["validator"]>["id"]
+  ): Promise<z.infer<T["validator"]> | null> {
+    const collection = this.getCollection(collectionLookupValue);
+
+    if (!collection) {
+      throw new Error("Collection not found");
+    }
+
+    const rawCollectionItem = await this.currentAdapter.fetchFile(
+      `collections/${collection.names.path}/${itemId}.json`
+    );
+
+    if (!rawCollectionItem) {
+      return null;
+    }
+
+    const collectionItem = collection.validator.parse(
+      JSON.parse(rawCollectionItem)
+    );
+
+    return collectionItem;
   }
 
   async addToCollection<T extends Collection>(
@@ -184,7 +342,7 @@ export class Engine {
       | T["names"]["singular"]
       | T["names"]["plural"],
     data: z.infer<T["validator"]>
-  ): Promise<T[]> {
+  ): Promise<z.infer<T["validator"]>[]> {
     if (!this.currentAdapter) {
       throw new Error("No adapter selected");
     }
@@ -195,28 +353,29 @@ export class Engine {
       throw new Error("Collection not found");
     }
 
-    const item = collection.validator.parse(data);
+    const rawNewItem: z.infer<(typeof collection)["validator"]> = {
+      ...data,
+      id: collection.idFunction(),
+    };
 
-    if (this.collectionItems[collection.id]) {
-      this.collectionItems[collection.id].push(item);
-    } else {
-      this.collectionItems[collection.id] = [item];
-    }
+    const item = collection.validator.parse(rawNewItem);
 
     let request: ReturnType<
       IAdapter["createCommit"] | IAdapter["createPullRequest"]
     >;
 
-    if (this.repoConfig.prBasedMutations) {
-      request = this.currentAdapter.createPullRequest({
-        title: `Add ${collection.names.singular} ${item.id}`,
-        description: `Add ${collection.names.singular} ${item.id}`,
-      });
-    } else {
-      request = this.currentAdapter.createCommit({
-        message: `Add ${collection.names.singular} ${item.id}`,
-      });
-    }
+    // if (this.repoConfig.prBasedMutations) {
+    //   request = this.currentAdapter.createPullRequest({
+    //     title: `Add ${collection.names.singular} ${item.id}`,
+    //     description: `Add ${collection.names.singular} ${item.id}`,
+    //   });
+    // } else {
+    request = this.currentAdapter.createFile(
+      `collections/${collection.names.path}/${item.id}.json`,
+      JSON.stringify(item, null, 2),
+      `Add ${collection.names.singular} ${item.id}`
+    );
+    // }
 
     return request.then(() => {
       this.collectionItems[collection.id] = [
@@ -234,7 +393,7 @@ export class Engine {
       | T["names"]["singular"]
       | T["names"]["plural"],
     itemId: z.infer<T["validator"]>["id"]
-  ): Promise<T[]> {
+  ): Promise<z.infer<T["validator"]>[]> {
     if (!this.currentAdapter) {
       throw new Error("No adapter selected");
     }
@@ -249,63 +408,150 @@ export class Engine {
       IAdapter["createCommit"] | IAdapter["createPullRequest"]
     >;
 
-    if (this.repoConfig.prBasedMutations) {
-      request = this.currentAdapter.createPullRequest({
-        title: `Remove ${collection.names.singular} ${itemId}`,
-        description: `Remove ${collection.names.singular} ${itemId}`,
-      });
-    } else {
-      request = this.currentAdapter.createCommit({
-        message: `Remove ${collection.names.singular} ${itemId}`,
-      });
-    }
+    // if (this.repoConfig.prBasedMutations) {
+    //   request = this.currentAdapter.createPullRequest({
+    //     title: `Remove ${collection.names.singular} ${itemId}`,
+    //     description: `Remove ${collection.names.singular} ${itemId}`,
+    //   });
+    // } else {
+    request = this.currentAdapter.deleteFile(
+      `collections/${collection.names.path}/${itemId}.json`,
+      `Remove ${collection.names.singular} ${itemId}`
+    );
+    // }
 
-    return request.then(() => {
+    await request.then(() => {
       this.collectionItems[collection.id] =
         this.collectionItems[collection.id]?.filter(
           (item) => item.id !== itemId
         ) || [];
       return this.collectionItems[collection.id];
     });
+
+    this.notifySubscribers();
+
+    return this.collectionItems[collection.id];
   }
 
-  // async updateInCollection<T extends Collection>(
-  //   collectionLookupValue:
-  //     | T["id"]
-  //     | T["names"]["singular"]
-  //     | T["names"]["plural"],
-  //   itemId: string,
-  //   data: z.infer<T["validator"]>
-  // ): Promise<T> {
-  //   if (!this.currentAdapter) {
-  //     throw new Error("No adapter selected");
-  //   }
+  async updateInCollection<T extends Collection>(
+    collectionLookupValue:
+      | T["id"]
+      | T["names"]["singular"]
+      | T["names"]["plural"],
+    itemId: string,
+    data: z.infer<T["validator"]>
+  ): Promise<z.infer<T["validator"]>[]> {
+    if (!this.currentAdapter) {
+      throw new Error("No adapter selected");
+    }
 
-  //   const collection = this.getCollection(collectionLookupValue);
+    const collection = this.getCollection(collectionLookupValue);
 
-  //   if (!collection) {
-  //     throw new Error("Collection not found");
-  //   }
+    if (!collection) {
+      throw new Error("Collection not found");
+    }
 
-  //   const existingItem = this.collectionItems[collection.id].find(
-  //     (item) => item.id === itemId
-  //   );
+    const existingItem = this.collectionItems[collection.id].find(
+      (item) => item.id === itemId
+    );
 
-  //   if (!existingItem) {
-  //     throw new Error("Item not found");
-  //   }
+    if (!existingItem) {
+      throw new Error("Item not found");
+    }
 
-  //   const item = collection.validator.parse(data);
+    const item = collection.validator.parse(data);
 
-  //   this.collectionItems[collection.id] = this.collectionItems[
-  //     collection.id
-  //   ].map((item) => {
-  //     if (item.id === itemId) {
-  //       return item;
-  //     }
-  //     return item;
-  //   });
+    await this.currentAdapter.updateFile(
+      `collections/${collection.names.path}/${itemId}.json`,
+      JSON.stringify(
+        {
+          ...item,
+          id: itemId,
+        },
+        null,
+        2
+      ),
+      `Update ${collection.names.singular} ${itemId}`
+    );
 
-  //   throw new Error("Not implemented");
-  // }
+    console.log("Updated item", item);
+
+    this.collectionItems[collection.id] = this.collectionItems[
+      collection.id
+    ].map((_item) => {
+      if (_item.id === itemId) {
+        return item;
+      }
+      return _item;
+    });
+
+    this.notifySubscribers();
+
+    return this.collectionItems[collection.id];
+  }
+
+  async initializeCollection(collection: Collection) {
+    const adapter = this.getAdapter();
+
+    if (!adapter) {
+      throw new Error("No adapter selected");
+    }
+
+    return adapter.createFile(
+      `collections/${collection.names.path}/.gitkeep`,
+      "",
+      `Create collection: ${collection.names.singular}`
+    );
+  }
+
+  async initializeRepoConfig(repoConfig: RepoConfig) {
+    const adapter = this.getAdapter();
+
+    if (!adapter) {
+      throw new Error("No adapter selected");
+    }
+
+    return adapter.createFile(
+      "config.json",
+      JSON.stringify(
+        repoConfig ?? {
+          prBasedMutations: false,
+        }
+      )
+    );
+  }
+
+  async initialize() {
+    const repoConfig = this.getRepoConfig();
+
+    await this.initializeRepoConfig(repoConfig);
+
+    for (const collection of this.collections) {
+      await this.initializeCollection(collection);
+    }
+
+    this.status = "valid";
+    this.notifySubscribers();
+  }
+
+  // Grouping together props and methods for caching PRs
+  private lastFetchPullRequestTimestamp = 0;
+  private cachedPullRequests: PrResponse[] = [];
+  async fetchPullRequests(force = false) {
+    const adapter = this.getAdapter();
+
+    if (!adapter) {
+      throw new Error("No adapter selected");
+    }
+
+    if (force) {
+      this.lastFetchPullRequestTimestamp = 0;
+    }
+
+    if (this.lastFetchPullRequestTimestamp > Date.now() - 1000 * 60 * 5) {
+      return this.cachedPullRequests;
+    } else {
+      return adapter.fetchPullRequests();
+    }
+  }
 }

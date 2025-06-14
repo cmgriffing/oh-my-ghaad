@@ -3,23 +3,31 @@ import { AdapterProps } from "./types";
 export class Adapter implements AdapterProps {
   clientId: string;
   redirectUri: string;
-  token: string;
-  owner: string;
-  repo: string;
+  token: string | null;
+  owner: string | null;
+  repo: string | null;
+  accessManagementUrl: string;
+  protected unauthorizedHandler: (() => void | Promise<void>) | null = null;
 
   constructor(props: AdapterProps) {
     this.clientId = props.clientId;
     this.redirectUri = props.redirectUri;
-    this.token = props.token;
-    this.owner = props.owner;
-    this.repo = props.repo;
+    this.accessManagementUrl = props.accessManagementUrl;
   }
 
-  setOwner(owner: string) {
+  setOwner(owner: string | null) {
     this.owner = owner;
   }
 
-  setRepo(repo: string) {
+  setRepo(repo: string | null) {
     this.repo = repo;
+  }
+
+  setToken(token: string | null) {
+    this.token = token;
+  }
+
+  setUnauthorizedHandler(handler: () => void | Promise<void>) {
+    this.unauthorizedHandler = handler;
   }
 }

@@ -16,3 +16,17 @@ export function base64ToUtf8(base64String: string): string | null {
     return null;
   }
 }
+
+export function utf8ToBase64(utf8String: string): string | null {
+  try {
+    // Encode the string as UTF-8
+    const encoder = new TextEncoder();
+    const byteArray = encoder.encode(utf8String);
+
+    // Convert the byte array to base64 and return it
+    return btoa(String.fromCharCode(...byteArray));
+  } catch (e) {
+    console.error("Error encoding string as base64:", e);
+    return null;
+  }
+}
