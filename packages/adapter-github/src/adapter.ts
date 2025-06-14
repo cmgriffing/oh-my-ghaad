@@ -29,8 +29,6 @@ export class GithubAdapter extends Adapter implements IAdapter {
 
     const endpointData = endpoint(url, pathParams);
 
-    console.log("token", this.token?.slice(-5));
-
     const response = await fetch(endpointData.url, {
       method: endpointData.method,
       headers: {
@@ -87,15 +85,9 @@ export class GithubAdapter extends Adapter implements IAdapter {
         const responseJson =
           (await response.json()) as EndpointResponse["data"];
 
-        console.log("lol", {
-          responseJson,
-        });
-
         if (!responseJson.repositories) {
           throw new Error("Failed to fetch repositories");
         }
-
-        console.log("reponseData", responseJson);
 
         return responseJson.repositories.map((repository) => ({
           id: repository.id,

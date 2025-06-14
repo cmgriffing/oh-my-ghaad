@@ -20,14 +20,11 @@ export default function EditTalk() {
 
   const { slug: talkId } = useParams();
 
-  const { engine } = useGHaaD(GAAD, (collections) => {
-    console.log("Collections", collections);
-  });
+  const { engine } = useGHaaD(GAAD);
 
   const [talk, setTalk] = useState<z.infer<typeof talkSchema>>();
 
   useEffect(() => {
-    console.log("talkId", talkId);
     if (!talkId) {
       return;
     }
@@ -42,7 +39,6 @@ export default function EditTalk() {
   function onSubmit(values: z.infer<typeof talkSchema>) {
     if (talk?.id) {
       engine.updateInCollection("talks", talk.id, values).then((talks) => {
-        console.log("Added talk", talks);
         router.back();
       });
     } else {

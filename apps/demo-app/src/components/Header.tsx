@@ -28,9 +28,7 @@ export function Header() {
 
   const [showingInitializeDialog, setShowingInitializeDialog] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
-  const { engine } = useGHaaD(GAAD, (collections) => {
-    console.log("GHaaD causing rerender here in Header");
-  });
+  const { engine } = useGHaaD(GAAD);
 
   const adapter = engine.getAdapter();
   const { repo, owner, baseUrl } = adapter || {
@@ -55,10 +53,7 @@ export function Header() {
 
   useEffect(() => {
     if (isLoggedIn) {
-      console.log("syncing");
-      engine.sync().then(() => {
-        console.log("Synced", engine.getRepoStatus());
-      });
+      engine.sync();
     }
   }, [isLoggedIn, engine.getAdapter()?.repo]);
 
@@ -123,14 +118,12 @@ export function Header() {
                   engine
                     .initialize()
                     .then(() => {
-                      console.log("Initialized");
                       toast("Repo initialized", {
                         description:
                           "Start creating Conferences and Talks to get started.",
                       });
                     })
                     .catch(() => {
-                      console.log("Failed to initialize");
                       toast.error("Could not initialize repo", {
                         description:
                           "Try manually emptying the repo and trying again.",

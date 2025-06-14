@@ -5,8 +5,6 @@ import * as cheerio from "cheerio";
 export async function POST(request: NextApiRequest) {
   const { conferenceUrl } = await request.json();
 
-  console.log("conferenceUrl", conferenceUrl);
-
   if (!conferenceUrl || typeof conferenceUrl !== "string") {
     return new Response("Missing code", { status: 400 });
   }

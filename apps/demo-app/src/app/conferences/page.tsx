@@ -62,9 +62,7 @@ export default function Conferences() {
     z.infer<(typeof conferenceCollection)["validator"]>[]
   >([]);
 
-  const GHAAD = useGHaaD(GAAD, (collections) => {
-    console.log("Collections", collections);
-  });
+  const GHAAD = useGHaaD(GAAD);
 
   const { engine } = GHAAD;
 
@@ -93,11 +91,9 @@ export default function Conferences() {
   }, []);
 
   function onDelete(conference: z.infer<typeof conferenceSchema>) {
-    console.log("Deleting", conference);
     return engine
       .removeFromCollection("conferences", conference.id)
       .then((conferences) => {
-        console.log("Deleted", conferences);
         setAllConferences(conferences);
       });
   }

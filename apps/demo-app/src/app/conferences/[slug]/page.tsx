@@ -70,7 +70,6 @@ export default function Conference() {
   const { engine } = useGHaaD(GAAD);
 
   useEffect(() => {
-    console.log("conferenceId", conferenceId);
     if (!conferenceId) {
       return;
     }
@@ -110,7 +109,6 @@ export default function Conference() {
           return response.json();
         })
         .then((responseJson: { image: string }) => {
-          console.log("Image", responseJson.image);
           setOgImage(responseJson.image);
         });
     }

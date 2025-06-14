@@ -137,11 +137,12 @@ export class Engine {
     const rawConfigString = await this.currentAdapter
       ?.fetchFile("config.json")
       .catch(() => {
-        console.log("Could not fetch the config file");
+        console.log(
+          "OH My GHaaD: Could not fetch the config file, setting status to empty"
+        );
       });
 
     if (!rawConfigString) {
-      console.log("Setting status to empty");
       this.status = "empty";
       throw new Error("No config file found");
     }
@@ -176,12 +177,6 @@ export class Engine {
       })),
     ]);
 
-    console.log("Made it past the fetch in sync");
-
-    // TODO: fetch PRs if configured
-    // if (repoConfig.prBasedMutations) {
-    // }
-
     this.notifySubscribers();
   }
 
@@ -201,7 +196,6 @@ export class Engine {
     }
 
     this.adapters.forEach((adapter) => {
-      console.log("Setting token on adapter", adapter?.name, token?.slice(-5));
       adapter.setToken(token);
     });
 
@@ -293,14 +287,6 @@ export class Engine {
         >;
       }) || [];
 
-    // if (this.repoConfig.prBasedMutations) {
-    //   const pullRequests = await this.fetchPullRequests(force);
-    //   pullRequests.forEach((pr) => {
-    //     // TODO: filter PRs for items in this collection and add them to collection with proper state
-    //     pr.
-    //   });
-    // }
-
     this.collectionItems[collection.id] = collectionItems;
 
     this.notifySubscribers();
@@ -364,18 +350,11 @@ export class Engine {
       IAdapter["createCommit"] | IAdapter["createPullRequest"]
     >;
 
-    // if (this.repoConfig.prBasedMutations) {
-    //   request = this.currentAdapter.createPullRequest({
-    //     title: `Add ${collection.names.singular} ${item.id}`,
-    //     description: `Add ${collection.names.singular} ${item.id}`,
-    //   });
-    // } else {
     request = this.currentAdapter.createFile(
       `collections/${collection.names.path}/${item.id}.json`,
       JSON.stringify(item, null, 2),
       `Add ${collection.names.singular} ${item.id}`
     );
-    // }
 
     return request.then(() => {
       this.collectionItems[collection.id] = [
@@ -408,17 +387,10 @@ export class Engine {
       IAdapter["createCommit"] | IAdapter["createPullRequest"]
     >;
 
-    // if (this.repoConfig.prBasedMutations) {
-    //   request = this.currentAdapter.createPullRequest({
-    //     title: `Remove ${collection.names.singular} ${itemId}`,
-    //     description: `Remove ${collection.names.singular} ${itemId}`,
-    //   });
-    // } else {
     request = this.currentAdapter.deleteFile(
       `collections/${collection.names.path}/${itemId}.json`,
       `Remove ${collection.names.singular} ${itemId}`
     );
-    // }
 
     await request.then(() => {
       this.collectionItems[collection.id] =
@@ -473,8 +445,6 @@ export class Engine {
       ),
       `Update ${collection.names.singular} ${itemId}`
     );
-
-    console.log("Updated item", item);
 
     this.collectionItems[collection.id] = this.collectionItems[
       collection.id

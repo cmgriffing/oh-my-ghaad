@@ -5,12 +5,6 @@ export async function POST(request: Request) {
     return new Response("Missing code", { status: 400 });
   }
 
-  // console.log(
-  //   "Truncated id",
-  //   process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID!.slice(-5)
-  // );
-  // console.log("Truncated secret", process.env.GITHUB_CLIENT_SECRET!.slice(-5));
-
   const response = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
     headers: {
@@ -26,7 +20,6 @@ export async function POST(request: Request) {
   });
 
   if (!response.ok) {
-    console.log("Response not ok", await response.text());
     return new Response("Failed to fetch token", { status: 500 });
   }
 

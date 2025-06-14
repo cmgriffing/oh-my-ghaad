@@ -31,13 +31,10 @@ import { ConferenceDetailsForm } from "@/components/ConferenceDetailsForm";
 
 export default function NewConference() {
   const router = useRouter();
-  const { engine } = useGHaaD(GAAD, (collections) => {
-    console.log("Collections", collections);
-  });
+  const { engine } = useGHaaD(GAAD);
 
   function onSubmit(values: z.infer<typeof conferenceSchema>) {
     engine.addToCollection("conferences", values).then((conferences) => {
-      console.log("Added conference", conferences);
       router.push("/conferences");
     });
   }

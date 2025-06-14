@@ -19,15 +19,12 @@ export default function EditConference() {
 
   const { slug: conferenceId } = useParams();
 
-  const { engine } = useGHaaD(GAAD, (collections) => {
-    console.log("Collections", collections);
-  });
+  const { engine } = useGHaaD(GAAD);
 
   const [conference, setConference] =
     useState<z.infer<typeof conferenceSchema>>();
 
   useEffect(() => {
-    console.log("conferenceId", conferenceId);
     if (!conferenceId) {
       return;
     }
@@ -46,7 +43,6 @@ export default function EditConference() {
       engine
         .updateInCollection("conferences", conference.id, values)
         .then((conferences) => {
-          console.log("Added conference", conferences);
           router.back();
         });
     } else {

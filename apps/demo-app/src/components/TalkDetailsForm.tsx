@@ -143,14 +143,7 @@ export function TalkDetailsForm({
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            onClick={() => {
-              console.log("HMMMMM");
-            }}
-          >
-            Save
-          </Button>
+          <Button type="submit">Save</Button>
         </CardFooter>
       </form>
     </Form>

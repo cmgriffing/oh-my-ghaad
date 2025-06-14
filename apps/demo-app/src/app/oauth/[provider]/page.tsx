@@ -19,10 +19,6 @@ export default function OAuth() {
   const setupAction = searchParams.get("setup_action");
 
   useEffect(() => {
-    console.log("no code or provider", {
-      oauthCode,
-      provider,
-    });
     if (!oauthCode || !provider) {
       return;
     }

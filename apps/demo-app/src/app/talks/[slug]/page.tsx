@@ -37,7 +37,6 @@ export default function Talk() {
   >([]);
 
   useEffect(() => {
-    console.log("talkId", talkId);
     if (!talkId) {
       return;
     }

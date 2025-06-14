@@ -13,7 +13,6 @@ export default function NewTalk() {
 
   function onSubmit(values: z.infer<typeof talkSchema>) {
     engine.addToCollection("talks", values).then((talks) => {
-      console.log("Added talk", talks);
       router.push("/talks");
     });
   }

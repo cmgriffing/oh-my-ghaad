@@ -25,9 +25,7 @@ export default function Settings() {
   const [repositories, setRepositories] = useState<RepositoryResponse[]>([]);
   const router = useRouter();
 
-  const { engine } = useGHaaD(GAAD, (collections) => {
-    console.log("Collections", collections);
-  });
+  const { engine } = useGHaaD(GAAD);
 
   const currentAdapter = engine.getAdapter();
   const { repo, owner, baseUrl } = currentAdapter || {
@@ -38,14 +36,11 @@ export default function Settings() {
 
   const repoName = `${owner}/${repo}`;
 
-  console.log({ repoName });
-
   useEffect(() => {
     if (!currentAdapter?.token) {
       return;
     }
     currentAdapter?.fetchRepositories().then((repositories) => {
-      console.log("Repositories", repositories);
       setRepositories(repositories);
 
       if (repositories.length === 1) {
@@ -83,7 +78,6 @@ export default function Settings() {
           <Select
             value={`${currentAdapter?.owner}/${currentAdapter?.repo}`}
             onValueChange={(value) => {
-              console.log("value", value);
               engine.setRepoName(value);
               engine.setRepoOwner(value.split("/")[0]);
             }}
@@ -104,30 +98,6 @@ export default function Settings() {
               </SelectGroup>
             </SelectContent>
           </Select>
-          // <Card
-          //   className={"flex flex-row gap-2 items-center"}
-          // >
-          //   <input
-          //     key={installation.id}
-          //     value={fullName}
-          //     id={fullName}
-          //     type="radio"
-          //     name="repo"
-          //     checked={repoName === fullName}
-          //     className="ml-2"
-          //     onChange={() => {
-          //       console.log("change");
-          //       engine.setRepoName(installation.name);
-          //       engine.setRepoOwner(installation.org);
-          //     }}
-          //   />
-          //   <label
-          //     htmlFor={fullName}
-          //     className="flex flex-row p-2 w-full pl-0"
-          //   >
-          //     {fullName}
-          //   </label>
-          // </Card>
         )}
 
         <Button

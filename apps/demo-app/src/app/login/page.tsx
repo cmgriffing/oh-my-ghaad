@@ -9,9 +9,7 @@ import clsx from "clsx";
 import React, { useState, useEffect } from "react";
 
 export default function Login() {
-  const { engine } = useGHaaD(GAAD, (collections) => {
-    console.log("Collections", collections);
-  });
+  const { engine } = useGHaaD(GAAD);
 
   const adapters = engine.getAdapters();
 
