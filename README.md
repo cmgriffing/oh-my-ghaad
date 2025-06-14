@@ -1,84 +1,207 @@
-# Turborepo starter
+# Oh My GHAAD
 
-This Turborepo starter is maintained by the Turborepo core team.
+A monorepo containing packages and applications for treating Git repositories (GitHub/GitLab/BitBucket) as JSON databases with built-in authentication and permissions.
 
-## Using this example
+## Overview
 
-Run the following command:
+This project provides a way to use Git repositories as a form of "serverless" database, where:
+- Data is stored as JSON files in the repository
+- Authentication and permissions are handled by the Git platform (GitHub/GitLab/BitBucket)
+- Changes are tracked through Git's version control system
+- Multiple users can collaborate with proper access controls
 
-```sh
-npx create-turbo@latest
+The repository contains:
+
+- `@oh-my-ghaad/core` - Core functionality for Git-based JSON storage
+- `@oh-my-ghaad/adapter-github` - GitHub-specific implementation
+- `@oh-my-ghaad/react` - React components and hooks for easy integration
+- `demo-app` - Example application showcasing the packages
+
+## Getting Started
+
+Install the core, your preferred adapter (GitHub in this example), and the framework-specific library for your frontend (ReactJS in this case).
+
+NPM:
+```
+npm install @oh-my-ghaad/core @oh-my-ghaad/github @oh-my-ghaad/react
 ```
 
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
+Yarn
 ```
-cd my-turborepo
-pnpm build
+yarn add @oh-my-ghaad/core @oh-my-ghaad/github @oh-my-ghaad/react
 ```
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
+PNPM
 ```
-cd my-turborepo
-pnpm dev
+pnpm add @oh-my-ghaad/core @oh-my-ghaad/github @oh-my-ghaad/react
 ```
 
-### Remote Caching
+## Key Concepts
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+### Collections
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+Collections are the primary way to organize and validate your data. Each collection:
+- Has a unique ID
+- Uses Zod for schema validation
+- Can be referenced by ID, singular name, or plural name
+- Stores data in a dedicated directory in the repository
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+### Engine
+
+The Engine is the main interface for interacting with your Git-based database. It:
+- Manages adapters for different Git platforms
+- Handles collection operations
+- Provides real-time updates through subscriptions
+- Manages repository configuration
+
+### Adapters
+
+Adapters are responsible for platform-specific operations. The core package defines the interface that all adapters must implement. See the [main README](../../README.md) for available adapters.
+
+### Creating and Using the Engine
+
+This is a very light example of using the Engine in a vanilla JS context.
+
+For adapter specific examples, see the README for the adapter you are using.
+- [GitHub Adapter](./packages/adapter-github/README.md)
+
+For framework specific examples, see the README for the framework you are using.
+- [React](./packages/react/README.md)
+
+To see a full React/GitHub example, see the [demo-app](./apps/demo-app/README.md).
+
+```typescript
+import { Engine } from '@oh-my-ghaad/core';
+import { GitHubAdapter } from '@oh-my-ghaad/github';
+import { z } from 'zod';
+
+// Define your collection schema
+const widgetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(['gauge', 'chart', 'counter']),
+  config: z.object({
+    color: z.string(),
+    size: z.enum(['small', 'medium', 'large']),
+    enabled: z.boolean()
+  })
+});
+
+// Create a collection
+const widgetsCollection = {
+  id: 'widgets',
+  names: {
+    singular: 'widget',
+    plural: 'widgets',
+    path: 'widgets'
+  },
+  validator: widgetSchema,
+  idFunction: () => crypto.randomUUID()
+};
+
+// Create a GitHub adapter
+const githubAdapter = new GitHubAdapter();
+
+// Create the engine instance
+const engine = new Engine({
+  adapters: [githubAdapter],
+  collections: [widgetsCollection],
+  appConfig: {
+    persisted: true, // Persist adapter and token in localStorage
+    persistedAdapterKey: 'selected-adapter',
+    persistedTokenKey: 'github-token',
+    persistedRepoKey: 'github-repo',
+    persistedOwnerKey: 'github-owner'
+  }
+});
+
+// Set up the repository
+await engine.setRepoOwner('your-username');
+await engine.setRepoName('your-repo');
+await engine.setToken('your-github-token');
+
+// Initialize the repository (creates config.json and collection directories)
+await engine.initialize();
+
+// Add a widget to the collection
+const newWidget = {
+  name: 'Sales Counter',
+  type: 'counter',
+  config: {
+    color: '#4CAF50',
+    size: 'medium',
+    enabled: true
+  }
+};
+
+await engine.addToCollection('widgets', newWidget);
+
+// Fetch all widgets
+const widgets = await engine.fetchCollectionItems('widgets');
+
+// Update a widget
+await engine.updateInCollection('widgets', newWidget.id, {
+  ...newWidget,
+  config: {
+    ...newWidget.config,
+    size: 'large'
+  }
+});
+
+// Remove a widget
+await engine.removeFromCollection('widgets', newWidget.id);
+```
+
+## Project Structure
 
 ```
-cd my-turborepo
-npx turbo login
+.
+├── apps/
+│   └── demo-app/        # Example application
+├── packages/
+│   ├── core/           # Core Git-based JSON storage functionality
+│   ├── adapter-github/ # GitHub-specific implementation
+│   └── react/          # React components and hooks
+└── ...
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## Packages
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+### Core
+The core package provides the fundamental functionality for treating Git repositories as JSON databases. See [packages/core/README.md](./packages/core/README.md) for more details.
 
-```
-npx turbo link
-```
+### Adapters
 
-## Useful Links
+Adapters are responsible for interacting with the Git platform (GitHub/GitLab/BitBucket) and providing the necessary functionality to store and retrieve data.
 
-Learn more about the power of Turborepo:
+See the README for the adapter you are using for more details.
+- [GitHub Adapter](./packages/adapter-github/README.md)
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+
+### Framework Integrations
+
+Framework packages provide the necessary functionality to integrate the core package with a specific framework.
+
+See the README for the framework you are using for more details.
+- [React](./packages/react/README.md)
+
+## Use Cases
+
+- Simple applications that need a database but don't want to manage server infrastructure
+- Collaborative applications where data changes need to be tracked
+- Projects that benefit from Git's built-in authentication and permissions
+- Applications that need version control for their data
+
+## Contributing
+
+We are open to contributions! Some of the things we are looking for:
+- Adapters for other Git platforms
+- Framework integrations for other frameworks
+- Documentation
+- Examples
+- Tests
+- Bug fixes
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
