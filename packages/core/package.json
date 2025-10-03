@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "tsup src/index.ts --watch --dts --format esm,cjs",
     "build": "tsup src/index.ts --dts --format esm,cjs",
+    "prepublish": "pnpm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
