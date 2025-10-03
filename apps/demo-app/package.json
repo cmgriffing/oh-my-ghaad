@@ -12,7 +12,6 @@
     "@hookform/resolvers": "^5.1.0",
     "@oh-my-ghaad/core": "workspace:*",
     "@oh-my-ghaad/github": "workspace:*",
-    "@oh-my-ghaad/msw": "workspace:*",
     "@oh-my-ghaad/react": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.15",

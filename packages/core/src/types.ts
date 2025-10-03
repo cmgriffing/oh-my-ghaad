@@ -17,7 +17,7 @@ export interface AdapterProps {
 export type Subscription = (collections: Collection[]) => void | Promise<void>;
 
 export interface RepositoryResponse {
-  id: string;
+  id: string | number;
   org: string;
   name: string;
   url: string;
