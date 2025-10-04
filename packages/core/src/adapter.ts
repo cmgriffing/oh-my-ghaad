@@ -7,12 +7,14 @@ export class Adapter implements AdapterProps {
   owner: string | null;
   repo: string | null;
   accessManagementUrl: string;
+  scopes: string[];
   protected unauthorizedHandler: (() => void | Promise<void>) | null = null;
 
   constructor(props: AdapterProps) {
     this.clientId = props.clientId;
     this.redirectUri = props.redirectUri;
     this.accessManagementUrl = props.accessManagementUrl;
+    this.scopes = props.scopes;
   }
 
   setOwner(owner: string | null) {

@@ -12,6 +12,7 @@ export interface AdapterProps {
   clientId: string;
   redirectUri: string;
   accessManagementUrl: string;
+  scopes: string[];
 }
 
 export type Subscription = (collections: Collection[]) => void | Promise<void>;
