@@ -9,7 +9,7 @@
     "turboversion": "turboversion",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "publish-pkgs": "pnpm publish -r --filter ./packages*"
+    "publish-pkgs": "pnpm -r publish --filter \"./packages/*\""
   },
   "devDependencies": {
     "prettier": "^3.5.3",
