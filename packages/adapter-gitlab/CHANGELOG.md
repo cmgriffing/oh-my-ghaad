@@ -1,4 +1,8 @@
-## 0.0.1 (2025-10-04)
+## [0.0.2](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.1...v0.0.2) (2025-10-04)
+
+
+
+## [0.0.1](https://github.com/cmgriffing/oh-my-ghaad/compare/a3367b1690c534c4d1fe19be6a287171226d9590...v0.0.1) (2025-10-04)
 
 
 ### Bug Fixes
