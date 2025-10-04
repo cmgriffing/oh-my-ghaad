@@ -3,7 +3,6 @@
   "tagPrefix": "v",
   "versionStrategy": "commitMessage",
   "preset": "angular",
-  "prereleaseIdentifier": "",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "sync": true,
