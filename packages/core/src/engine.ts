@@ -5,6 +5,7 @@ import type { IAdapter, PrResponse, RepoStatus, Subscription } from "./types";
 import { Adapter } from "./adapter";
 import type { AppConfig, RepoConfig } from "./validators";
 import { repoConfigSchema } from "./validators";
+import { RepositoryResponse } from "../dist";
 
 const storage = typeof window !== "undefined" ? window.localStorage : null;
 
@@ -63,15 +64,8 @@ export class Engine {
       const persistedRepo = storage?.getItem(
         this.appConfig.persistedRepoKey || "repo"
       );
-      if (persistedRepo) {
-        this.getAdapter()?.setRepo(persistedRepo);
-      }
-
-      const persistedOwner = storage?.getItem(
-        this.appConfig.persistedOwnerKey || "owner"
-      );
-      if (persistedOwner) {
-        this.getAdapter()?.setOwner(persistedOwner);
+      if (persistedRepo && typeof persistedRepo === "string") {
+        this.getAdapter()?.setRepo(JSON.parse(persistedRepo));
       }
     }
   }
@@ -96,27 +90,16 @@ export class Engine {
     );
   }
 
-  setRepoOwner(owner: string | null) {
+  setRepo(repo: RepositoryResponse | null) {
     if (this.appConfig.persisted) {
       storage?.setItem(
-        this.appConfig.persistedOwnerKey || "owner",
-        owner || ""
+        this.appConfig.persistedRepoKey || "repo",
+        JSON.stringify(repo || {})
       );
     }
 
     this.adapters.forEach((adapter) => {
-      adapter.setOwner(owner);
-    });
-    this.notifySubscribers();
-  }
-
-  setRepoName(name: string | null) {
-    if (this.appConfig.persisted) {
-      storage?.setItem(this.appConfig.persistedRepoKey || "repo", name || "");
-    }
-
-    this.adapters.forEach((adapter) => {
-      adapter.setRepo(name);
+      adapter.setRepo(repo);
     });
     this.notifySubscribers();
   }

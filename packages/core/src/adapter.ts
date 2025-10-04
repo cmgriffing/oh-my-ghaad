@@ -1,11 +1,10 @@
-import { AdapterProps } from "./types";
+import { AdapterProps, RepositoryResponse } from "./types";
 
 export class Adapter implements AdapterProps {
   clientId: string;
   redirectUri: string;
   token: string | null;
-  owner: string | null;
-  repo: string | null;
+  repo: RepositoryResponse | null;
   accessManagementUrl: string;
   scopes: string[];
   protected unauthorizedHandler: (() => void | Promise<void>) | null = null;
@@ -17,11 +16,7 @@ export class Adapter implements AdapterProps {
     this.scopes = props.scopes;
   }
 
-  setOwner(owner: string | null) {
-    this.owner = owner;
-  }
-
-  setRepo(repo: string | null) {
+  setRepo(repo: RepositoryResponse | null) {
     this.repo = repo;
   }
 

@@ -111,8 +111,8 @@ export class GithubAdapter extends Adapter implements IAdapter {
     type EndpointResponse = Endpoint["response"];
 
     const pathParams: Parameters = {
-      owner: this.owner,
-      repo: this.repo,
+      owner: this.repo.org,
+      repo: this.repo.name,
       path: path,
     };
 
@@ -163,8 +163,8 @@ export class GithubAdapter extends Adapter implements IAdapter {
     type Parameters = Endpoint["parameters"];
 
     const pathParams: Parameters = {
-      owner: this.owner,
-      repo: this.repo,
+      owner: this.repo.org,
+      repo: this.repo.name,
       path: path,
     };
 
@@ -229,8 +229,8 @@ export class GithubAdapter extends Adapter implements IAdapter {
     type Parameters = Endpoint["parameters"];
 
     const pathParams: Parameters = {
-      owner: this.owner,
-      repo: this.repo,
+      owner: this.repo.org,
+      repo: this.repo.name,
       path: path,
       message: message || `Create file: ${path}`,
       content: utf8ToBase64(content),
@@ -288,8 +288,8 @@ export class GithubAdapter extends Adapter implements IAdapter {
     type Parameters = Endpoint["parameters"];
 
     const pathParams: Parameters = {
-      owner: this.owner,
-      repo: this.repo,
+      owner: this.repo.org,
+      repo: this.repo.name,
       path: path,
       message: message || `Delete file: ${path}`,
       sha: fileJson.sha,
@@ -323,8 +323,8 @@ export class GithubAdapter extends Adapter implements IAdapter {
     type Parameters = Endpoint["parameters"];
 
     const pathParams: Parameters = {
-      owner: this.owner,
-      repo: this.repo,
+      owner: this.repo.org,
+      repo: this.repo.name,
       path: "foo.bar",
       message: "",
       content: "",

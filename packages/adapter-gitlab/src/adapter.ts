@@ -65,7 +65,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
 
   async fetchFile(path: string) {
     const fileOrError = await this.api.RepositoryFiles.show(
-      this.repo,
+      this.repo.id,
       path,
       "HEAD"
     ).catch((error: GitbeakerRequestError) => {
@@ -96,7 +96,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
 
   async fetchDirectory(directoryPath: string) {
     const filesOrError = await this.api.Repositories.allRepositoryTrees(
-      this.repo,
+      this.repo.id,
       {
         path: directoryPath,
       }
@@ -129,7 +129,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
   }
 
   async createFile(path: string, content: string, message?: string) {
-    const branchesOrError = await this.api.Branches.all(this.repo).catch(
+    const branchesOrError = await this.api.Branches.all(this.repo.id).catch(
       (error: GitbeakerRequestError) => {
         console.error(error);
         return error;
@@ -153,7 +153,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
     }
 
     const existingFileOrError = await this.api.RepositoryFiles.show(
-      this.repo,
+      this.repo.id,
       path,
       branch.name
     ).catch((error: GitbeakerRequestError) => {
@@ -176,7 +176,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
     }
 
     const createdFileOrError = await this.api.Commits.create(
-      this.repo,
+      this.repo.id,
       branch.name,
       message || `Create file: ${path}`,
       [
@@ -206,7 +206,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
   }
 
   async updateFile(path: string, content: string, message?: string) {
-    const branchesOrError = await this.api.Branches.all(this.repo).catch(
+    const branchesOrError = await this.api.Branches.all(this.repo.id).catch(
       (error: GitbeakerRequestError) => {
         console.error(error);
         return error;
@@ -230,7 +230,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
     }
 
     const existingFileOrError = await this.api.RepositoryFiles.show(
-      this.repo,
+      this.repo.id,
       path,
       branch.name
     ).catch((error: GitbeakerRequestError) => {
@@ -253,7 +253,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
     }
 
     const createdFileOrError = await this.api.Commits.create(
-      this.repo,
+      this.repo.id,
       branch.name,
       message || `Create file: ${path}`,
       [
@@ -284,7 +284,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
 
   async deleteFile(path: string, message?: string) {
     const responseOrError = await this.api.RepositoryFiles.remove(
-      this.repo,
+      this.repo.id,
       path,
       "HEAD",
       message || `Delete file: ${path}`
