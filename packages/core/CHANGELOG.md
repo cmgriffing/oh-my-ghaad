@@ -1,3 +1,12 @@
+## [0.0.8](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.7...v0.0.8) (2025-10-04)
+
+
+### Bug Fixes
+
+* instead of storing owner and repo separate, store the whole RepositoryResponse object ([db60e6b](https://github.com/cmgriffing/oh-my-ghaad/commit/db60e6b65f2232613a2de3ba6c0a45a51cbb0b27))
+
+
+
 ## [0.0.7](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.6...v0.0.7) (2025-10-04)
 
 
