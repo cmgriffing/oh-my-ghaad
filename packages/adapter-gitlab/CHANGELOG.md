@@ -1,3 +1,12 @@
+## [0.0.9](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.8...v0.0.9) (2025-10-05)
+
+
+### Bug Fixes
+
+* handle missing default branch in gitlab adapter ([40d3a7e](https://github.com/cmgriffing/oh-my-ghaad/commit/40d3a7ebb80f175161101444f47d187f6ed9259a))
+
+
+
 ## [0.0.8](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.7...v0.0.8) (2025-10-04)
 
 
