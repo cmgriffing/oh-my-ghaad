@@ -168,7 +168,6 @@ export class GitlabAdapter extends Adapter implements IAdapter {
       ) {
         this.unauthorizedHandler();
       }
-      throw new Error("Failed to fetch existing file");
     }
 
     if (existingFileOrError) {
