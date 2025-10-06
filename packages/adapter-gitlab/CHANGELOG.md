@@ -1,3 +1,12 @@
+## [0.0.10](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.9...v0.0.10) (2025-10-06)
+
+
+### Bug Fixes
+
+* create branch if none found in gitlab adapter ([d175797](https://github.com/cmgriffing/oh-my-ghaad/commit/d17579734ac25025a71ac0cadfa19d73815bf723))
+
+
+
 ## [0.0.9](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.8...v0.0.9) (2025-10-05)
 
 

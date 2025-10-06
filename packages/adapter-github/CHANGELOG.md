@@ -1,3 +1,7 @@
+## [0.0.10](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.9...v0.0.10) (2025-10-06)
+
+
+
 ## [0.0.9](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.8...v0.0.9) (2025-10-05)
 
 
