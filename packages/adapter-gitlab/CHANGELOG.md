@@ -1,3 +1,12 @@
+## [0.0.11](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.10...v0.0.11) (2025-10-06)
+
+
+### Bug Fixes
+
+* remove thrown error when creating a file and it not existing yet ([3ed41b7](https://github.com/cmgriffing/oh-my-ghaad/commit/3ed41b79cbdb0115fe1640549fd76ff5a452728e))
+
+
+
 ## [0.0.10](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.9...v0.0.10) (2025-10-06)
 
 
