@@ -149,36 +149,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
     let branch = branchesOrError.find((branch) => branch.default);
 
     if (!branch) {
-      // throw new Error("Failed to find default branch");
-      branch = {
-        name: "main",
-        merged: true,
-        protected: false,
-        default: true,
-        developersCanPush: true,
-        developersCanMerge: true,
-        canPush: true,
-        webUrl: "",
-        commit: {
-          id: "",
-          shortId: "",
-          title: "",
-          authorName: "",
-          authorEmail: "",
-          sha: "",
-          message: "",
-          author: {
-            name: "",
-            email: "",
-            date: "",
-          },
-          committer: {
-            name: "",
-            email: "",
-            date: "",
-          },
-        },
-      };
+      branch = await this.api.Branches.create(this.repo.id, "main", "HEAD");
     }
 
     const existingFileOrError = await this.api.RepositoryFiles.show(
