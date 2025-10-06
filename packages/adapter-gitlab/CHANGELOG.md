@@ -1,3 +1,12 @@
+## [0.0.12](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.11...v0.0.12) (2025-10-06)
+
+
+### Bug Fixes
+
+* make existing file check be an exclusive if else if ([ce355be](https://github.com/cmgriffing/oh-my-ghaad/commit/ce355bed7a8f21bbc7f4cc149ec43e547288d1dc))
+
+
+
 ## [0.0.11](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.10...v0.0.11) (2025-10-06)
 
 
