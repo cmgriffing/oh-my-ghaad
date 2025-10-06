@@ -168,9 +168,7 @@ export class GitlabAdapter extends Adapter implements IAdapter {
       ) {
         this.unauthorizedHandler();
       }
-    }
-
-    if (existingFileOrError) {
+    } else if (existingFileOrError) {
       throw new Error("File already exists");
     }
 
