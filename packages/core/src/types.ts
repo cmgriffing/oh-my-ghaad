@@ -55,11 +55,8 @@ export interface IAdapter extends AdapterProps {
   fetchRepositories(): Promise<RepositoryResponse[]>;
 
   fetchFile(filePath: string): Promise<string>;
-  fetchFileHistory(filePath: string): Promise<CommitResponse[]>;
   fetchDirectory(directoryPath: string): Promise<string[]>;
 
-  createCommit(commitRequest: CommitRequest): Promise<void>;
-  // This method is ONLY used for initialization for now. We may end up using it for the non-PR workflow as well.
   createFile(
     filePath: string,
     content: string,
@@ -71,12 +68,6 @@ export interface IAdapter extends AdapterProps {
     message?: string
   ): Promise<void>;
   deleteFile(filePath: string, message?: string): Promise<void>;
-
-  fetchPullRequests(): Promise<PrResponse[]>;
-  createPullRequest(prRequest: PrRequest): Promise<void>;
-  fetchPullRequest(): Promise<PrResponse>;
-  updatePullRequest(prRequest: PrRequest): Promise<void>;
-  deletePullRequest(id: string): Promise<void>;
 }
 
 export interface BaseCollectionItem {

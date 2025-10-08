@@ -329,11 +329,7 @@ export class Engine {
 
     const item = collection.validator.parse(rawNewItem);
 
-    let request: ReturnType<
-      IAdapter["createCommit"] | IAdapter["createPullRequest"]
-    >;
-
-    request = this.currentAdapter.createFile(
+    const request = this.currentAdapter.createFile(
       `collections/${collection.names.path}/${item.id}.json`,
       JSON.stringify(item, null, 2),
       `Add ${collection.names.singular} ${item.id}`
@@ -366,11 +362,7 @@ export class Engine {
       throw new Error("Collection not found");
     }
 
-    let request: ReturnType<
-      IAdapter["createCommit"] | IAdapter["createPullRequest"]
-    >;
-
-    request = this.currentAdapter.deleteFile(
+    const request = this.currentAdapter.deleteFile(
       `collections/${collection.names.path}/${itemId}.json`,
       `Remove ${collection.names.singular} ${itemId}`
     );
@@ -485,26 +477,5 @@ export class Engine {
 
     this.status = "valid";
     this.notifySubscribers();
-  }
-
-  // Grouping together props and methods for caching PRs
-  private lastFetchPullRequestTimestamp = 0;
-  private cachedPullRequests: PrResponse[] = [];
-  async fetchPullRequests(force = false) {
-    const adapter = this.getAdapter();
-
-    if (!adapter) {
-      throw new Error("No adapter selected");
-    }
-
-    if (force) {
-      this.lastFetchPullRequestTimestamp = 0;
-    }
-
-    if (this.lastFetchPullRequestTimestamp > Date.now() - 1000 * 60 * 5) {
-      return this.cachedPullRequests;
-    } else {
-      return adapter.fetchPullRequests();
-    }
   }
 }

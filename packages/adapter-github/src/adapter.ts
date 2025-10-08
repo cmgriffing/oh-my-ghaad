@@ -156,51 +156,6 @@ export class GithubAdapter extends Adapter implements IAdapter {
     return content || "";
   }
 
-  async fetchFileHistory(path: string) {
-    const url: EndpointPath = "GET /repos/{owner}/{repo}/commits";
-
-    type Endpoint = Endpoints[typeof url];
-    type Parameters = Endpoint["parameters"];
-
-    const pathParams: Parameters = {
-      owner: this.repo.org,
-      repo: this.repo.name,
-      path: path,
-    };
-
-    const endpointData = endpoint(url, pathParams);
-
-    const response = await fetch(endpointData.url, {
-      method: endpointData.method,
-      headers: {
-        ...endpointData.headers,
-        Authorization: `Bearer ${this.token}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401 && this.unauthorizedHandler) {
-        this.unauthorizedHandler();
-      }
-      throw new Error("Failed to fetch file history");
-    }
-
-    const responseJson = await response.json();
-
-    if (!responseJson.commits) {
-      throw new Error("Failed to fetch file history");
-    }
-
-    // TODO: figure out the actual response types because this commit is any at the moment
-    return responseJson.commits.map((commit) => ({
-      commitId: commit.sha,
-      commitMessage: commit.commit.message,
-      commitDate: commit.commit.committer.date,
-      authorName: commit.commit.author.name,
-      authorImageUrl: commit.author.avatar_url,
-    }));
-  }
-
   async fetchDirectory(directoryPath: string) {
     const responseJson = await this.fetchPathContents(directoryPath);
 
@@ -313,64 +268,6 @@ export class GithubAdapter extends Adapter implements IAdapter {
       throw new Error("Failed to delete file");
     }
 
-    return;
-  }
-
-  async createCommit({}: CommitRequest) {
-    const url: EndpointPath = "PUT /repos/{owner}/{repo}/contents/{path}";
-
-    type Endpoint = Endpoints[typeof url];
-    type Parameters = Endpoint["parameters"];
-
-    const pathParams: Parameters = {
-      owner: this.repo.org,
-      repo: this.repo.name,
-      path: "foo.bar",
-      message: "",
-      content: "",
-    };
-
-    const endpointData = endpoint(url, pathParams);
-
-    const response = await fetch(endpointData.url, {
-      method: endpointData.method,
-      headers: {
-        ...endpointData.headers,
-        Authorization: `Bearer ${this.token}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 401 && this.unauthorizedHandler) {
-        this.unauthorizedHandler();
-      }
-      throw new Error("Failed to create commit");
-    }
-  }
-
-  async fetchPullRequests() {
-    return [];
-  }
-
-  async createPullRequest() {
-    return;
-  }
-
-  async fetchPullRequest() {
-    return {
-      id: "",
-      title: "",
-      description: "",
-      commitSha: "",
-      createdAt: "",
-    };
-  }
-
-  async updatePullRequest() {
-    return;
-  }
-
-  async deletePullRequest() {
     return;
   }
 }

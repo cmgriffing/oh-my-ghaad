@@ -302,42 +302,4 @@ export class GitlabAdapter extends Adapter implements IAdapter {
 
     return;
   }
-
-  // TODO: Why did I add this method?
-  async createCommit({}: CommitRequest) {
-    return;
-  }
-
-  // -----------------------------------------------------------------------------
-  // TODO: Pull Requests and File History are not yet implemented or used in the demo app yet
-  // -----------------------------------------------------------------------------
-  async fetchFileHistory(path: string) {
-    return [];
-  }
-
-  async fetchPullRequests() {
-    return [];
-  }
-
-  async createPullRequest() {
-    return;
-  }
-
-  async fetchPullRequest() {
-    return {
-      id: "",
-      title: "",
-      description: "",
-      commitSha: "",
-      createdAt: "",
-    };
-  }
-
-  async updatePullRequest() {
-    return;
-  }
-
-  async deletePullRequest() {
-    return;
-  }
 }
