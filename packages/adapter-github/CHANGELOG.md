@@ -1,3 +1,12 @@
+## [0.0.13](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.12...v0.0.13) (2025-10-08)
+
+
+### Bug Fixes
+
+* remove PR methods and other unused methods ([2227905](https://github.com/cmgriffing/oh-my-ghaad/commit/222790537f47c5cc385187cc4656d2450d47f7a7))
+
+
+
 ## [0.0.12](https://github.com/cmgriffing/oh-my-ghaad/compare/v0.0.11...v0.0.12) (2025-10-06)
 
 
